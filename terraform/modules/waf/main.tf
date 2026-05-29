@@ -3,12 +3,12 @@
 #
 # Rule groups deploy in COUNT mode by default (var.rule_action = "count") for
 # the first 2 weeks. Operator flips var.rule_action = "block" after baselining
-# WAF logs to ensure no false positives against legitimate ARAS traffic.
+# WAF logs to ensure no false positives against legitimate application traffic.
 ################################################################################
 
 resource "aws_wafv2_web_acl" "this" {
-  name        = "plm-aras-${var.environment}"
-  description = "ARAS PLM web ACL — OWASP, SQLi, Windows/IIS, bad-input filters"
+  name        = "plm-app-${var.environment}"
+  description = "PLM application web ACL — OWASP, SQLi, Windows/IIS, bad-input filters"
   scope       = "REGIONAL"
 
   default_action {
@@ -63,7 +63,7 @@ resource "aws_wafv2_web_acl" "this" {
     }
   }
 
-  # 3. Windows / IIS specific exploits — ARAS runs on Windows Server + IIS
+  # 3. Windows / IIS specific exploits — app runs on Windows Server + IIS
   rule {
     name     = "AWSManagedRulesWindowsRuleSet"
     priority = 30
@@ -113,7 +113,7 @@ resource "aws_wafv2_web_acl" "this" {
 
   visibility_config {
     cloudwatch_metrics_enabled = true
-    metric_name                = "plm-aras-acl"
+    metric_name                = "plm-app-acl"
     sampled_requests_enabled   = true
   }
 

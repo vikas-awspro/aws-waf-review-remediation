@@ -1,7 +1,7 @@
 ################################################################################
 # ALB + web/app-tier Auto Scaling Groups — four findings remediated in one
 # module:
-#   REL-03  : ASG health_check_type = ELB + ALB /aras/health probe
+#   REL-03  : ASG health_check_type = ELB + ALB /app/health probe
 #   PERF-03 : ALB idle_timeout = 300
 #   PERF-04 : Web tier t3.large → m5.large (non-burstable)
 #   COST-05 : Detailed monitoring retained only on the app tier
@@ -12,7 +12,7 @@
 ############################
 
 resource "aws_lb" "this" {
-  name               = "plm-aras-${var.environment}"
+  name               = "plm-app-${var.environment}"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [var.alb_sg_id]
@@ -25,7 +25,7 @@ resource "aws_lb" "this" {
 
   access_logs {
     bucket  = var.access_log_bucket
-    prefix  = "alb-plm-aras"
+    prefix  = "alb-plm-app"
     enabled = true
   }
 
@@ -61,11 +61,11 @@ resource "aws_lb_listener" "http_redirect" {
 }
 
 ############################
-# Web-tier target group — REL-03 health check probes /aras/health
+# Web-tier target group — REL-03 health check probes /app/health
 ############################
 
 resource "aws_lb_target_group" "web" {
-  name             = "plm-aras-web-${var.environment}"
+  name             = "plm-app-web-${var.environment}"
   port             = 443
   protocol         = "HTTPS"
   vpc_id           = var.vpc_id
@@ -74,7 +74,7 @@ resource "aws_lb_target_group" "web" {
 
   health_check {
     enabled             = true
-    path                = "/aras/health"
+    path                = "/app/health"
     matcher             = "200"
     protocol            = "HTTPS"
     port                = "traffic-port"
@@ -99,7 +99,7 @@ resource "aws_lb_target_group" "web" {
 
 # Web tier — PERF-04 — m5.large (non-burstable, eliminates CPU credit exhaustion)
 resource "aws_launch_template" "web" {
-  name_prefix   = "plm-aras-web-${var.environment}-"
+  name_prefix   = "plm-app-web-${var.environment}-"
   image_id      = var.web_ami_id
   instance_type = "m5.large"
 
@@ -135,7 +135,7 @@ resource "aws_launch_template" "web" {
 
 # App tier — m5.xlarge retained; detailed monitoring kept for perf investigation
 resource "aws_launch_template" "app" {
-  name_prefix   = "plm-aras-app-${var.environment}-"
+  name_prefix   = "plm-app-app-${var.environment}-"
   image_id      = var.app_ami_id
   instance_type = "m5.xlarge"
 
@@ -174,14 +174,14 @@ resource "aws_launch_template" "app" {
 ############################
 
 resource "aws_autoscaling_group" "web" {
-  name                      = "plm-aras-web-${var.environment}"
+  name                      = "plm-app-web-${var.environment}"
   min_size                  = 2
   desired_capacity          = 2
   max_size                  = 6
   vpc_zone_identifier       = var.private_subnet_ids
   target_group_arns         = [aws_lb_target_group.web.arn]
   health_check_type         = "ELB"          # REL-03
-  health_check_grace_period = 300            # 5 min for ARAS startup
+  health_check_grace_period = 300            # 5 min for app startup
   default_cooldown          = 300
   termination_policies      = ["OldestLaunchTemplate", "OldestInstance"]
 
@@ -199,7 +199,7 @@ resource "aws_autoscaling_group" "web" {
   }
 
   dynamic "tag" {
-    for_each = merge(var.tags, { Name = "plm-aras-web-${var.environment}", Tier = "web", Finding = "REL-03 PERF-04" })
+    for_each = merge(var.tags, { Name = "plm-app-web-${var.environment}", Tier = "web", Finding = "REL-03 PERF-04" })
     content {
       key                 = tag.key
       value               = tag.value
@@ -209,7 +209,7 @@ resource "aws_autoscaling_group" "web" {
 }
 
 resource "aws_autoscaling_group" "app" {
-  name                      = "plm-aras-app-${var.environment}"
+  name                      = "plm-app-app-${var.environment}"
   min_size                  = 2
   desired_capacity          = 2
   max_size                  = 6
@@ -225,7 +225,7 @@ resource "aws_autoscaling_group" "app" {
   }
 
   dynamic "tag" {
-    for_each = merge(var.tags, { Name = "plm-aras-app-${var.environment}", Tier = "app", Finding = "REL-03" })
+    for_each = merge(var.tags, { Name = "plm-app-app-${var.environment}", Tier = "app", Finding = "REL-03" })
     content {
       key                 = tag.key
       value               = tag.value

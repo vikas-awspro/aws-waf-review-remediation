@@ -172,7 +172,7 @@ def main() -> None:
     md.append("  COST-01 Savings Plan purchase (after PERF-01 + PERF-04 validated)")
     md.append("")
     md.append("Sprint 5 (Week 7–8)  ─┐")
-    md.append("  SEC-06  CloudTrail → Splunk (PMI IT coordination — 3 weeks)")
+    md.append("  SEC-06  CloudTrail → Splunk (customer IT coordination — 3 weeks)")
     md.append("  SEC-07  IR runbook + tabletop exercise")
     md.append("  REL-02  RTO/RPO BIA + SLA sign-off")
     md.append("  REL-07  FIS templates + Game Day")
@@ -182,7 +182,7 @@ def main() -> None:
     # ===== Sign-off =====
     md.append("## Sign-off")
     md.append("")
-    md.append("Remediations were applied to the PMI PLM-PROD account between Apr 2023 and "
+    md.append("Remediations were applied to the customer's production PLM account between Apr 2023 and "
               "Sep 2023 by the IBM cloud engineering team. All 26 'remediated' findings have "
               "Terraform / runbook artefacts in this repository. The one finding marked "
               "*accepted with residual risk* (PERF-06) is a documented cost/granularity "
@@ -190,8 +190,8 @@ def main() -> None:
               "5-min baseline (COST-05).")
     md.append("")
     md.append("- Cloud Architect, IBM India: Vikas Jain")
-    md.append("- Cloud Infrastructure Lead, PMI: signed (date in document management system)")
-    md.append("- IT Security Officer, PMI: signed")
+    md.append("- Cloud Infrastructure Lead, customer: signed (date in document management system)")
+    md.append("- IT Security Officer, customer: signed")
     md.append("")
     md.append("Annual re-review of the four pillars is scheduled for Q1 of each year, with "
               "the next quarterly Game Day exercising the REL-07 templates.")

@@ -23,7 +23,7 @@ provider "aws" {
       Project     = "plm-waf-remediation"
       Environment = "prod"
       ManagedBy   = "terraform"
-      Workload    = "aras-plm"
+      Workload    = "plm-app"
     }
   }
 }
@@ -37,7 +37,7 @@ provider "aws" {
       Project     = "plm-waf-remediation"
       Environment = "prod"
       ManagedBy   = "terraform"
-      Workload    = "aras-plm"
+      Workload    = "plm-app"
       Role        = "dr-replica"
     }
   }

@@ -97,7 +97,7 @@ data "aws_iam_policy_document" "bucket" {
 
   # Allow only the listed principals — default deny applies to everyone else.
   statement {
-    sid    = "ARASApp"
+    sid    = "AppAccess"
     effect = "Allow"
     actions = [
       "s3:GetObject", "s3:PutObject", "s3:DeleteObject",
@@ -110,7 +110,7 @@ data "aws_iam_policy_document" "bucket" {
     }
   }
   statement {
-    sid       = "ARASAppList"
+    sid       = "AppAccessList"
     effect    = "Allow"
     actions   = ["s3:ListBucket", "s3:GetBucketLocation"]
     resources = [aws_s3_bucket.this.arn]
@@ -176,7 +176,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
       storage_class = "GLACIER_IR"   # Glacier Flexible Retrieval — Instant Retrieval variant
     }
     expiration {
-      days = 2555   # 7 years — PMI document retention policy
+      days = 2555   # 7 years — customer document retention policy
     }
     noncurrent_version_expiration {
       noncurrent_days = 90

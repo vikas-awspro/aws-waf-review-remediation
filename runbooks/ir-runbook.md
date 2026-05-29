@@ -1,7 +1,7 @@
 # Cloud incident response runbook — SEC-07
 
 PLM AWS account incident response playbook. Validated via tabletop exercise
-with PMI IT Security on T+8w post-WAF review.
+with customer IT Security on T+8w post-WAF review.
 
 ## Severity classification
 
@@ -23,7 +23,7 @@ aws ec2 modify-instance-attribute \
 
 # Optionally detach from ASG so it isn't auto-replaced.
 aws autoscaling detach-instances \
-    --auto-scaling-group-name plm-aras-app-prod \
+    --auto-scaling-group-name plm-app-app-prod \
     --instance-ids i-xxxxx --no-should-decrement-desired-capacity
 ```
 
@@ -115,13 +115,13 @@ Tooling:
 
 | Role | Contact | When |
 |------|---------|------|
-| PMI CISO | PMI directory | Any confirmed P0/P1 |
+| customer CISO | customer directory | Any confirmed P0/P1 |
 | AWS TAM / Support | AWS Console → Support Center | Any P0/P1 needing AWS assistance |
 | IBM delivery lead | IBM PM | P0/P1 incidents involving delivered components |
-| Legal / privacy | PMI Legal | Confirmed personal-data exposure |
-| Regulatory | PMI Regulatory | Personal-data breach affecting > 100 individuals (GDPR) |
+| Legal / privacy | customer Legal | Confirmed personal-data exposure |
+| Regulatory | customer Regulatory | Personal-data breach affecting > 100 individuals (GDPR) |
 
 ## Communication templates
 
-Pre-approved templates in [PMI document management system, ref CLOUD-IR-COMMS-001](#).
+Pre-approved templates in [customer document management system, ref CLOUD-IR-COMMS-001](#).
 Cover: internal exec brief, all-staff notice, regulator notification, customer notice.

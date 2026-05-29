@@ -128,7 +128,7 @@ module "iam_app_tier" {
 module "s3_vault" {
   source = "../../modules/s3-document-vault"
 
-  bucket_name        = "plm-aras-documents-${data.aws_caller_identity.current.account_id}"
+  bucket_name        = "plm-app-documents-${data.aws_caller_identity.current.account_id}"
   kms_key_arn        = module.rds.kms_key_arn
   app_tier_role_arn  = module.iam_app_tier.role_arn
   backup_role_arn    = aws_iam_role.backup.arn

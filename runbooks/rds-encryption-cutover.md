@@ -9,16 +9,16 @@ encrypted copy → restore → application cutover**.
 | Check | Owner | Evidence |
 |-------|-------|----------|
 | Backup window confirmed (Sat 22:00 GMT → Sun 02:00 GMT) | DBA Lead | Change ticket approved |
-| Staging environment validates encrypted instance with ARAS app | DBA + App | 24h staging soak passes |
+| Staging environment validates encrypted instance with app | DBA + App | 24h staging soak passes |
 | KMS key `alias/rds-plm-prod` exists with rotation enabled | Cloud Eng | `aws kms describe-key` |
 | Aurora target sized identical (db.r5.xlarge per PERF-01) | DBA Lead | Terraform plan diff |
-| ARAS connection string change tested in staging | App Team | UAT pass |
+| the application connection string change tested in staging | App Team | UAT pass |
 
 ## Cutover sequence (4-hour window)
 
 ### T-0:00 — Open window
 - App team drains the ALB (graceful 60s connection drain).
-- Confirm zero active ARAS sessions.
+- Confirm zero active the application sessions.
 
 ### T-0:05 — Final snapshot of source
 ```bash
@@ -54,14 +54,14 @@ Wait for `Status=available`. Validate from a bastion that the new instance
 accepts SQL connections.
 
 ### T-2:00 — Application cutover
-1. Update the ARAS connection string SSM parameter to point at the new endpoint:
+1. Update the application connection string SSM parameter to point at the new endpoint:
    ```bash
-   aws ssm put-parameter --name /aras/db/endpoint \
+   aws ssm put-parameter --name /app/db/endpoint \
        --value plm-mssql-prod-encrypted.cluster-xxxx.eu-west-1.rds.amazonaws.com \
        --type String --overwrite
    ```
-2. Restart ARAS application services on web/app tier (rolling, one instance at a time).
-3. Run ARAS smoke tests:
+2. Restart the application services on web/app tier (rolling, one instance at a time).
+3. Run the application smoke tests:
    - Login + dashboard render
    - Product structure query
    - Document upload (with the new presigned URL — see PERF-05)
@@ -89,7 +89,7 @@ aws rds delete-db-instance \
 
 The original unencrypted instance is **untouched** during this cutover —
 only the application connection string moves. Revert the SSM parameter,
-restart ARAS services, re-open the LB to the original endpoint. The
+restart the application services, re-open the LB to the original endpoint. The
 encrypted copy and snapshot remain available for a future attempt.
 
 ## Acceptance criteria
@@ -97,5 +97,5 @@ encrypted copy and snapshot remain available for a future attempt.
 - `aws rds describe-db-instances` shows `StorageEncrypted=true` and the
   expected KMS key ARN.
 - `aws rds describe-db-instances` shows `MultiAZ=true` (REL-01 combined).
-- ARAS application smoke tests pass within 30 min.
+- the application smoke tests pass within 30 min.
 - No P1 application incident in the 48 h post-cutover.

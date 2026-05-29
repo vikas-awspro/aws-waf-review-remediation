@@ -17,7 +17,7 @@ findings:
       module: terraform/modules/iam-app-tier
       script: scripts/iam-policy-generator.py
     before: "PowerUserAccess attached to app-tier EC2 instance profile"
-    after: "Custom inline policy: s3 vault prefix, rds-db:connect, ssm /aras/*, logs"
+    after: "Custom inline policy: s3 vault prefix, rds-db:connect, ssm /app/*, logs"
     effort_days: 5
     risk_reduction: critical
     notes: "Generated from 30-day CloudTrail observation; staged 1 week before prod"
@@ -84,11 +84,11 @@ findings:
     status: remediated
     fixed_by:
       module: terraform/modules/cloudtrail-siem
-    before: "CloudTrail logs in S3 only; not correlated with PMI SOC alerts"
+    before: "CloudTrail logs in S3 only; not correlated with the customer's SOC alerts"
     after: "CloudWatch Logs → Kinesis Firehose → Splunk HEC; EventBridge for high-severity"
     effort_days: 21
     risk_reduction: high
-    notes: "PMI IT change management was the long pole"
+    notes: "Customer IT change management was the long pole"
 
   - id: SEC-07
     pillar: security
@@ -102,7 +102,7 @@ findings:
     after: "Runbook covering containment, credential revocation, evidence preservation, escalation"
     effort_days: 12
     risk_reduction: high
-    notes: "Validated via 2-hour tabletop exercise with PMI IT Security"
+    notes: "Validated via 2-hour tabletop exercise with the customer's IT Security team"
 
   # ============================== RELIABILITY ==============================
   - id: REL-01
@@ -140,8 +140,8 @@ findings:
     status: remediated
     fixed_by:
       module: terraform/modules/alb-asg
-    before: "HealthCheckType = EC2; hung ARAS processes not detected"
-    after: "HealthCheckType = ELB; ALB probes /aras/health; 2-failure replacement"
+    before: "HealthCheckType = EC2; hung application processes not detected"
+    after: "HealthCheckType = ELB; ALB probes /app/health; 2-failure replacement"
     effort_days: 2
 
   - id: REL-04
@@ -152,7 +152,7 @@ findings:
     status: remediated
     fixed_by:
       module: terraform/modules/rds-proxy
-    before: "ARAS connects direct to RDS; 12% HTTP 500 at 150 concurrent users"
+    before: "App connects direct to RDS; 12% HTTP 500 at 150 concurrent users"
     after: "RDS Proxy; max_connection_percent=80; connection_borrow_timeout=120s"
     effort_days: 5
 

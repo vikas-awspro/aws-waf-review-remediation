@@ -68,7 +68,7 @@ resource "aws_fis_experiment_template" "terminate_ec2" {
 
 # 2. RDS failover — validates Multi-AZ + RDS Proxy reconnection
 resource "aws_fis_experiment_template" "rds_failover" {
-  description = "Force RDS Multi-AZ failover; ARAS should reconnect via RDS Proxy in < 60s"
+  description = "Force RDS Multi-AZ failover; app should reconnect via RDS Proxy in < 60s"
   role_arn    = aws_iam_role.fis.arn
 
   action {

@@ -1,7 +1,7 @@
 region          = "eu-west-1"
 replica_region  = "eu-central-1"
 
-# Placeholders — populate after first apply of the original ARAS migration project.
+# Placeholders — populate after first apply of the original PLM application migration project.
 vpc_id                            = "vpc-replace-me"
 private_subnet_ids                = ["subnet-app-a", "subnet-app-b"]
 private_route_table_ids           = ["rtb-app-a", "rtb-app-b"]
@@ -20,7 +20,7 @@ web_ami_id                        = "ami-REPLACE-windows-web"
 app_ami_id                        = "ami-REPLACE-windows-app"
 access_log_bucket                 = "plm-access-logs"
 firehose_failure_bucket_arn       = "arn:aws:s3:::plm-firehose-failures"
-replication_destination_arn       = "arn:aws:s3:::plm-aras-documents-replica"
+replication_destination_arn       = "arn:aws:s3:::plm-app-documents-replica"
 replication_destination_kms_arn   = "arn:aws:kms:eu-central-1:000000000000:key/REPLACE"
 
 email_subscribers     = []

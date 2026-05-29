@@ -16,7 +16,7 @@ REL-03 (ELB health checks), REL-04 (RDS Proxy), REL-05 (Lambda DLQ).
 | Time | Experiment | Hypothesis | Success criterion |
 |------|-----------|------------|-------------------|
 | 10:30 | Terminate one web-tier EC2 | ASG replaces within 5 min; ALB health checks (REL-03) drain the dying instance correctly | New instance `InService` within 5 min; zero 5xx during transition |
-| 11:00 | RDS Multi-AZ failover | Multi-AZ failover (REL-01) completes ≤ 120 s; RDS Proxy (REL-04) reconnects ARAS without app-side errors | RDS `Available` ≤ 120 s; ARAS app errors zero during window |
+| 11:00 | RDS Multi-AZ failover | Multi-AZ failover (REL-01) completes ≤ 120 s; RDS Proxy (REL-04) reconnects the application without app-side errors | RDS `Available` ≤ 120 s; app errors zero during window |
 | 11:45 | AZ-a subnet network disruption (5 min) | Cross-AZ resilience via ASG + Multi-AZ RDS — service stays available | ALB serves ≥ 95% requests; auto-stops if kill-switch fires |
 | 12:30 | Lambda errors (50% inject) | DLQ (REL-05) captures failed events; CloudWatch alarm fires; reprocess script drains DLQ | DLQ message count > 0; alarm fires; `scripts/reprocess-dlq.py` drains queue |
 | 13:30 | Debrief + write-up | Team aligns on findings, gaps, follow-ups | One ticket per identified gap |

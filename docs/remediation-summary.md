@@ -28,12 +28,12 @@ This document is the appendix to [`docs/PLM_WAF_Review_Report.docx`](PLM_WAF_Rev
 
 | ID | Risk | Title | Status | Before → After | Artefact |
 |----|------|-------|--------|----------------|----------|
-| **SEC-01** | HIGH | IAM over-privileged app-tier role (PowerUserAccess) | ✅ remediated | PowerUserAccess attached to app-tier EC2 instance profile → Custom inline policy: s3 vault prefix, rds-db:connect, ssm /aras/*, logs | [`terraform/modules/iam-app-tier`](../terraform/modules/iam-app-tier/)<br>[`scripts/iam-policy-generator.py`](../scripts/iam-policy-generator.py) |
+| **SEC-01** | HIGH | IAM over-privileged app-tier role (PowerUserAccess) | ✅ remediated | PowerUserAccess attached to app-tier EC2 instance profile → Custom inline policy: s3 vault prefix, rds-db:connect, ssm /app/*, logs | [`terraform/modules/iam-app-tier`](../terraform/modules/iam-app-tier/)<br>[`scripts/iam-policy-generator.py`](../scripts/iam-policy-generator.py) |
 | **SEC-02** | HIGH | RDS SQL Server storage not encrypted | ✅ remediated | storage_encrypted = false; 2 TB of PLM data in plaintext → storage_encrypted = true with dedicated KMS CMK; rotation enabled | [`terraform/modules/rds-mssql`](../terraform/modules/rds-mssql/)<br>[`runbooks/rds-encryption-cutover.md`](../runbooks/rds-encryption-cutover.md) |
 | **SEC-03** | HIGH | S3 document vault missing explicit deny-unless-allow bucket policy | ✅ remediated | Relied on default-deny + BPA only; any account IAM role could read → Explicit bucket policy: principal-scoped allow + S3 Access Analyser enabled | [`terraform/modules/s3-document-vault`](../terraform/modules/s3-document-vault/) |
 | **SEC-04** | HIGH | No AWS WAF on internet-facing ALB | ✅ remediated | ALB had no Web ACL associated → WAF Web ACL with 4 managed rule groups; 2-week COUNT baseline then BLOCK | [`terraform/modules/waf`](../terraform/modules/waf/) |
 | **SEC-05** | MEDIUM | EC2 instances not enrolled in SSM Patch Manager | ✅ remediated | Ad-hoc manual patching → Patch baseline + maintenance window Sun 01:00–03:00 GMT, 7-day approval delay | [`terraform/modules/ssm-patch-manager`](../terraform/modules/ssm-patch-manager/) |
-| **SEC-06** | MEDIUM | CloudTrail not forwarded to Splunk SIEM | ✅ remediated | CloudTrail logs in S3 only; not correlated with PMI SOC alerts → CloudWatch Logs → Kinesis Firehose → Splunk HEC; EventBridge for high-severity | [`terraform/modules/cloudtrail-siem`](../terraform/modules/cloudtrail-siem/) |
+| **SEC-06** | MEDIUM | CloudTrail not forwarded to Splunk SIEM | ✅ remediated | CloudTrail logs in S3 only; not correlated with the customer's SOC alerts → CloudWatch Logs → Kinesis Firehose → Splunk HEC; EventBridge for high-severity | [`terraform/modules/cloudtrail-siem`](../terraform/modules/cloudtrail-siem/) |
 | **SEC-07** | MEDIUM | No cloud-specific incident response runbook | ✅ remediated | No documented IR steps for AWS-specific events → Runbook covering containment, credential revocation, evidence preservation, escalation | [`runbooks/ir-runbook.md`](../runbooks/ir-runbook.md) |
 
 ## Reliability (7 findings)
@@ -42,8 +42,8 @@ This document is the appendix to [`docs/PLM_WAF_Review_Report.docx`](PLM_WAF_Rev
 |----|------|-------|--------|----------------|----------|
 | **REL-01** | HIGH | RDS SQL Server deployed Single-AZ | ✅ remediated | Single-AZ; 15–40 min unplanned failover RTO → Multi-AZ; synchronous standby in eu-west-1b; 60–120 s automatic failover | [`terraform/modules/rds-mssql`](../terraform/modules/rds-mssql/) |
 | **REL-02** | HIGH | No defined RTO/RPO for PLM application | ✅ remediated | No SLA; backup retention 7 days but not validated → SLA documented: 99.9% during business hours, RTO ≤ 2h, RPO ≤ 1h; quarterly DR drill | [`runbooks/rto-rpo-bia.md`](../runbooks/rto-rpo-bia.md) |
-| **REL-03** | MEDIUM | ASG health check using EC2 status only | ✅ remediated | HealthCheckType = EC2; hung ARAS processes not detected → HealthCheckType = ELB; ALB probes /aras/health; 2-failure replacement | [`terraform/modules/alb-asg`](../terraform/modules/alb-asg/) |
-| **REL-04** | MEDIUM | No database connection pooling | ✅ remediated | ARAS connects direct to RDS; 12% HTTP 500 at 150 concurrent users → RDS Proxy; max_connection_percent=80; connection_borrow_timeout=120s | [`terraform/modules/rds-proxy`](../terraform/modules/rds-proxy/) |
+| **REL-03** | MEDIUM | ASG health check using EC2 status only | ✅ remediated | HealthCheckType = EC2; hung application processes not detected → HealthCheckType = ELB; ALB probes /app/health; 2-failure replacement | [`terraform/modules/alb-asg`](../terraform/modules/alb-asg/) |
+| **REL-04** | MEDIUM | No database connection pooling | ✅ remediated | App connects direct to RDS; 12% HTTP 500 at 150 concurrent users → RDS Proxy; max_connection_percent=80; connection_borrow_timeout=120s | [`terraform/modules/rds-proxy`](../terraform/modules/rds-proxy/) |
 | **REL-05** | MEDIUM | Lambda integration functions have no DLQ | ✅ remediated | Failed Lambda invocations silently dropped after 2 retries → SQS DLQ + CloudWatch alarm + reprocessing script + 3-retry exponential backoff | [`terraform/modules/lambda-integration`](../terraform/modules/lambda-integration/)<br>[`scripts/reprocess-dlq.py`](../scripts/reprocess-dlq.py) |
 | **REL-06** | MEDIUM | S3 vault missing versioning + CRR | ✅ remediated | No versioning; no CRR; 5.2 TB only in eu-west-1 → Versioning enabled; CRR to eu-central-1; Object Lock COMPLIANCE for regulatory prefix | [`terraform/modules/s3-document-vault`](../terraform/modules/s3-document-vault/) |
 | **REL-07** | LOW | No failure injection testing or Game Day | ✅ remediated | Failure modes only observed via incidents → AWS FIS experiment templates + half-day Game Day; quarterly cadence | [`terraform/modules/fis-gameday`](../terraform/modules/fis-gameday/)<br>[`runbooks/game-day.md`](../runbooks/game-day.md) |
@@ -120,7 +120,7 @@ Sprint 4 (Week 6)  ─┐
   COST-01 Savings Plan purchase (after PERF-01 + PERF-04 validated)
 
 Sprint 5 (Week 7–8)  ─┐
-  SEC-06  CloudTrail → Splunk (PMI IT coordination — 3 weeks)
+  SEC-06  CloudTrail → Splunk (customer IT coordination — 3 weeks)
   SEC-07  IR runbook + tabletop exercise
   REL-02  RTO/RPO BIA + SLA sign-off
   REL-07  FIS templates + Game Day
@@ -128,10 +128,10 @@ Sprint 5 (Week 7–8)  ─┐
 
 ## Sign-off
 
-Remediations were applied to the PMI PLM-PROD account between Apr 2023 and Sep 2023 by the IBM cloud engineering team. All 26 'remediated' findings have Terraform / runbook artefacts in this repository. The one finding marked *accepted with residual risk* (PERF-06) is a documented cost/granularity trade-off — app-tier instances retain 1-min monitoring; web tier moved to 5-min baseline (COST-05).
+Remediations were applied to the customer's production PLM account between Apr 2023 and Sep 2023 by the IBM cloud engineering team. All 26 'remediated' findings have Terraform / runbook artefacts in this repository. The one finding marked *accepted with residual risk* (PERF-06) is a documented cost/granularity trade-off — app-tier instances retain 1-min monitoring; web tier moved to 5-min baseline (COST-05).
 
 - Cloud Architect, IBM India: Vikas Jain
-- Cloud Infrastructure Lead, PMI: signed (date in document management system)
-- IT Security Officer, PMI: signed
+- Cloud Infrastructure Lead, customer: signed (date in document management system)
+- IT Security Officer, customer: signed
 
 Annual re-review of the four pillars is scheduled for Q1 of each year, with the next quarterly Game Day exercising the REL-07 templates.

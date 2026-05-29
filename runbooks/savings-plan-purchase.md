@@ -37,7 +37,7 @@ and the Lambda integration layer.
 
 ## Purchase steps
 
-1. **Finance approval** — open PR/ticket with PMI procurement. Expected
+1. **Finance approval** — open PR/ticket with customer procurement. Expected
    2–3 business days.
 2. **Cost Explorer → Savings Plans → Purchase**.
 3. Select:

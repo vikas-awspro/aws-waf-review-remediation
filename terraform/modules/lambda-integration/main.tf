@@ -10,7 +10,7 @@
 ############################
 
 resource "aws_sqs_queue" "dlq" {
-  name                       = "aras-integration-dlq-${var.environment}"
+  name                       = "app-integration-dlq-${var.environment}"
   message_retention_seconds  = 1209600   # 14 days
   visibility_timeout_seconds = 300
   kms_master_key_id          = var.kms_key_arn
@@ -22,7 +22,7 @@ resource "aws_sqs_queue" "dlq" {
 ############################
 
 resource "aws_cloudwatch_metric_alarm" "dlq_messages" {
-  alarm_name          = "aras-integration-dlq-messages-${var.environment}"
+  alarm_name          = "app-integration-dlq-messages-${var.environment}"
   alarm_description   = "Integration Lambda DLQ has messages — investigate failed events"
   namespace           = "AWS/SQS"
   metric_name         = "ApproximateNumberOfMessagesVisible"
@@ -60,7 +60,7 @@ data "aws_iam_policy_document" "dlq_send" {
 }
 
 resource "aws_iam_policy" "dlq_send" {
-  name        = "aras-integration-dlq-send-${var.environment}"
+  name        = "app-integration-dlq-send-${var.environment}"
   description = "Attach to integration Lambda execution roles to enable DLQ delivery"
   policy      = data.aws_iam_policy_document.dlq_send.json
   tags        = var.tags
@@ -81,7 +81,7 @@ data "aws_iam_policy_document" "reprocess_assume" {
 }
 
 resource "aws_iam_role" "reprocess" {
-  name               = "aras-dlq-reprocess-${var.environment}"
+  name               = "dlq-reprocess-reprocess-${var.environment}"
   assume_role_policy = data.aws_iam_policy_document.reprocess_assume.json
   tags               = var.tags
 }
@@ -102,7 +102,7 @@ resource "aws_iam_role_policy" "reprocess" {
       {
         Effect   = "Allow"
         Action   = ["lambda:InvokeFunction"]
-        Resource = "arn:aws:lambda:*:*:function:aras-integration-*"
+        Resource = "arn:aws:lambda:*:*:function:app-integration-*"
       },
       {
         Effect   = "Allow"
@@ -119,7 +119,7 @@ resource "aws_iam_role_policy" "reprocess" {
 ############################
 
 resource "aws_ssm_parameter" "presigned_url_expiry_seconds" {
-  name        = "/aras/upload/presigned-url-expiry-seconds"
+  name        = "/app/upload/presigned-url-expiry-seconds"
   type        = "String"
   value       = "3600"   # PERF-05 — was 300
   description = "Presigned URL expiry — 1 hour for large CAD upload support"
@@ -127,7 +127,7 @@ resource "aws_ssm_parameter" "presigned_url_expiry_seconds" {
 }
 
 resource "aws_ssm_parameter" "multipart_threshold_bytes" {
-  name        = "/aras/upload/multipart-threshold-bytes"
+  name        = "/app/upload/multipart-threshold-bytes"
   type        = "String"
   value       = "104857600"   # 100 MB — switch to multipart above this
   description = "Files larger than this use S3 multipart upload (PERF-05)"

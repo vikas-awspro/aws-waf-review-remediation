@@ -5,7 +5,7 @@ events for a target IAM role, over a configurable observation window.
 
 Usage:
     python3 iam-policy-generator.py \
-        --role-name aras-app-tier-prod \
+        --role-name app-tier-prod \
         --start-time "2026-04-01T00:00:00Z" \
         --end-time   "2026-05-01T00:00:00Z" \
         --output     policy.json

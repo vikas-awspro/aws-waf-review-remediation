@@ -1,10 +1,10 @@
 # RTO / RPO and Business Impact Analysis — REL-02
 
-Output of the BIA workshop held with PMI R&D Lead, IT Manager, and
+Output of the BIA workshop held with R&D Lead, IT Manager, and
 Regulatory Affairs Lead. Documents application SLA and maps each SLA target
 to specific AWS architecture controls.
 
-## Approved SLA — ARAS PLM
+## Approved SLA — PLM application
 
 | Metric | Target | Measurement |
 |--------|--------|-------------|
@@ -16,7 +16,7 @@ to specific AWS architecture controls.
 
 ## Business impact tier
 
-ARAS PLM is rated **Tier 2 — Critical Business System**:
+PLM application is rated **Tier 2 — Critical Business System**:
 
 - 500 concurrent users supporting global R&D operations
 - Regulatory submissions with statutory deadlines depend on this system
@@ -53,13 +53,13 @@ Conducted every quarter to validate the RTO target is still achievable.
 
 ### Drill 2 — Multi-AZ failover
 Use the FIS template `rds_failover` (REL-07 module) to force failover.
-Validate that ARAS reconnects via RDS Proxy within 90 s.
+Validate that the application reconnects via RDS Proxy within 90 s.
 
 ### Drill 3 — Full regional failover (annual)
 Exercise the eu-central-1 CRR replica:
 1. Promote eu-central-1 S3 replica to primary.
 2. Restore RDS to eu-central-1 from a recent automated backup.
-3. Re-deploy ARAS stack via Terraform in eu-central-1.
+3. Re-deploy the application stack via Terraform in eu-central-1.
 4. Update Route 53 alias.
 5. Measure end-to-end time. Target: ≤ 8 hours (extended RTO for regional).
 
@@ -76,7 +76,7 @@ Exercise the eu-central-1 CRR replica:
 
 ## Sign-offs
 
-- R&D Lead, PMI: __________ (Date: __________)
-- IT Manager, PMI: _________ (Date: __________)
-- Regulatory Affairs, PMI: __________ (Date: __________)
+- R&D Lead, customer: __________ (Date: __________)
+- IT Manager, customer: _________ (Date: __________)
+- Regulatory Affairs, customer: __________ (Date: __________)
 - Cloud Architect, IBM (Vikas Jain): __________ (Date: __________)

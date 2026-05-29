@@ -1,6 +1,6 @@
 # AWS Well-Architected Review — Remediation
 
-**Terraform, runbooks, and scripts that close all 27 findings from the AWS Well-Architected Framework review of a PMI ARAS Innovator PLM workload — 9 HIGH, 14 MEDIUM, 4 LOW across Security, Reliability, Performance, and Cost. Delivers $3,675/month ($44,100/year) in addressable cost savings while raising every pillar score by 26–34 points. Each finding's fix is traceable from the inventory YAML to a specific Terraform module, runbook, or script.**
+**Terraform, runbooks, and scripts that close all 27 findings from the AWS Well-Architected Framework review of an enterprise PLM (Product Lifecycle Management) workload — 9 HIGH, 14 MEDIUM, 4 LOW across Security, Reliability, Performance, and Cost. Delivers $3,675/month ($44,100/year) in addressable cost savings while raising every pillar score by 26–34 points. Each finding's fix is traceable from the inventory YAML to a specific Terraform module, runbook, or script.**
 
 ![AWS Well-Architected](https://img.shields.io/badge/AWS-Well--Architected-FF9900?logo=amazonaws&logoColor=white)
 ![Findings Closed](https://img.shields.io/badge/Findings%20closed-26%20%2F%2027-success)
@@ -93,7 +93,7 @@ A handful of non-obvious calls were made early — these shaped the rest of the 
 
 - **One module closes multiple findings when they share a resource.** SEC-02 (encryption), REL-01 (Multi-AZ), PERF-01 (rightsize), COST-02 (cost reduction), and PERF-07 (Query Store) are five findings on the same RDS instance. The [`rds-mssql`](terraform/modules/rds-mssql/) module sets the target state for all five and the runbook [`rds-encryption-cutover.md`](runbooks/rds-encryption-cutover.md) sequences them into a single 4-hour maintenance window. Treating them as five independent changes would have meant five maintenance windows and five rollback windows.
 
-- **WAF deployed in COUNT mode, then promoted to BLOCK.** Switching a managed rule group straight to BLOCK in front of a complex application like ARAS guarantees a false-positive incident on day one. The [`waf`](terraform/modules/waf/) module takes a `rule_action` variable — Terraform applies COUNT for two weeks, the operator reviews logs against legitimate ARAS traffic, then flips the variable to BLOCK in a follow-up PR. Same Terraform, different setting, no surprise outage.
+- **WAF deployed in COUNT mode, then promoted to BLOCK.** Switching a managed rule group straight to BLOCK in front of a complex application like the application guarantees a false-positive incident on day one. The [`waf`](terraform/modules/waf/) module takes a `rule_action` variable — Terraform applies COUNT for two weeks, the operator reviews logs against legitimate the application traffic, then flips the variable to BLOCK in a follow-up PR. Same Terraform, different setting, no surprise outage.
 
 - **IAM least-privilege generated from CloudTrail observation, not hand-written.** SEC-01 replaced `PowerUserAccess` with a custom policy. Writing that policy by hand from the architecture diagram would have missed at least one API call the application actually uses, requiring an emergency rollback. Instead, [`scripts/iam-policy-generator.py`](scripts/iam-policy-generator.py) scans 30 days of CloudTrail events for the role and emits a draft policy — the human work is *reviewing and tightening* that draft (replacing `*` with specific ARNs, removing read-only enumeration that production doesn't need) rather than starting from a blank file.
 
@@ -201,7 +201,7 @@ aws fis start-experiment --experiment-template-id "$TEMPLATE_ID"
 | RDS Multi-AZ; tested failover | REL-01 + REL-07 | `multi_az = true` + FIS experiment template `rds_failover` |
 | WAF on ALB | SEC-04 | `terraform/modules/waf/main.tf` — 4 managed rule groups |
 | RTO/RPO formally defined | REL-02 | `runbooks/rto-rpo-bia.md` — 99.9% / 2h / 1h signed |
-| ALB health checks application-aware | REL-03 | `terraform/modules/alb-asg/main.tf` — `health_check_type = "ELB"`, target group `/aras/health` |
+| ALB health checks application-aware | REL-03 | `terraform/modules/alb-asg/main.tf` — `health_check_type = "ELB"`, target group `/app/health` |
 | Connection pool via RDS Proxy | REL-04 | `terraform/modules/rds-proxy/main.tf` |
 | Lambda DLQ + alarm | REL-05 | `terraform/modules/lambda-integration/main.tf` |
 | S3 versioning + CRR + Object Lock | REL-06 | `terraform/modules/s3-document-vault/main.tf` |
@@ -218,4 +218,4 @@ aws fis start-experiment --experiment-template-id "$TEMPLATE_ID"
 ## Author
 
 **Vikas Jain** — Cloud Architect, IBM India (Oct 2022 – Sep 2023)
-Conducted the original Well-Architected review on the PMI ARAS PLM workload and led the IBM cloud engineering team through the remediation programme. This repo is the audit trail.
+Conducted the original Well-Architected review on the enterprise PLM application workload and led the IBM cloud engineering team through the remediation programme. This repo is the audit trail.

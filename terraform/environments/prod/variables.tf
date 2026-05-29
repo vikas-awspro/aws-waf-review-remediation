@@ -1,7 +1,7 @@
 variable "region"          { type = string  default = "eu-west-1" }
 variable "replica_region"  { type = string  default = "eu-central-1" }
 
-# Network — references existing VPC from the original ARAS migration project.
+# Network — references existing VPC from the original PLM application migration project.
 variable "vpc_id"                       { type = string }
 variable "private_subnet_ids"           { type = list(string) }
 variable "private_route_table_ids"      { type = list(string) }

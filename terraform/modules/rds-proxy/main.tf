@@ -1,7 +1,7 @@
 ################################################################################
-# RDS Proxy — REL-04 — connection pool between ARAS app tier and RDS SQL Server.
-# Reduces connection count to RDS by up to 87%; ARAS connection string is
-# updated to the Proxy endpoint after this lands.
+# RDS Proxy — REL-04 — connection pool between the app tier and RDS SQL Server.
+# Reduces connection count to RDS by up to 87%; the app's connection string
+# is updated to the Proxy endpoint after this lands.
 ################################################################################
 
 data "aws_iam_policy_document" "assume" {

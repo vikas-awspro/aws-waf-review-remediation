@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-REL-05 helper — drains the ARAS integration DLQ by re-invoking the
+REL-05 helper — drains the integration DLQ by re-invoking the
 originating Lambda function with the failed event payload.
 
 The Lambda destination is read from the SQS message attribute
@@ -9,7 +9,7 @@ the message is left in the queue and logged for human review.
 
 Usage:
     python3 reprocess-dlq.py \
-        --queue-url https://sqs.eu-west-1.amazonaws.com/000/aras-integration-dlq-prod \
+        --queue-url https://sqs.eu-west-1.amazonaws.com/000/app-integration-dlq-prod \
         --max-messages 100
 """
 from __future__ import annotations

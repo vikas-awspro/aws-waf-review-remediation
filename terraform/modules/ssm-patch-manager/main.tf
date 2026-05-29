@@ -8,7 +8,7 @@
 ################################################################################
 
 resource "aws_ssm_patch_baseline" "windows" {
-  name             = "plm-aras-windows-${var.environment}"
+  name             = "plm-app-windows-${var.environment}"
   description      = "Windows Server baseline — Critical + Security, 7-day approval delay"
   operating_system = "WINDOWS"
 
@@ -29,7 +29,7 @@ resource "aws_ssm_patch_baseline" "windows" {
 }
 
 resource "aws_ssm_maintenance_window" "patching" {
-  name              = "plm-aras-patching-${var.environment}"
+  name              = "plm-app-patching-${var.environment}"
   description       = "Weekly patching — Sun 01:00–03:00 GMT (SEC-05)"
   schedule          = "cron(0 1 ? * SUN *)"
   schedule_timezone = "Etc/GMT"
@@ -109,7 +109,7 @@ resource "aws_ssm_maintenance_window_task" "install" {
 
 resource "aws_ssm_patch_group" "this" {
   baseline_id = aws_ssm_patch_baseline.windows.id
-  patch_group = "plm-aras-${var.environment}"
+  patch_group = "plm-app-${var.environment}"
 }
 
 ############################
