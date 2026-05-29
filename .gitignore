@@ -1,0 +1,27 @@
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+*.tfplan
+
+# Generated artefacts — kept out of source; CI regenerates on every build.
+generated-policy.json
+
+# Secrets — never commit
+*.env
+*.env.local
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.swp

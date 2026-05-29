@@ -1,0 +1,78 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write   # for the auto-regenerated remediation-summary.md
+  pull-requests: write
+
+jobs:
+  findings-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install pyyaml jsonschema
+      - run: python scripts/validate_findings.py
+
+  regenerate-report:
+    name: regenerate remediation-summary.md
+    runs-on: ubuntu-latest
+    needs: findings-schema
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install pyyaml
+      - run: python scripts/generate_report.py
+      - name: assert no drift on PRs
+        if: github.event_name == 'pull_request'
+        run: |
+          if ! git diff --quiet docs/remediation-summary.md; then
+              echo "::error::docs/remediation-summary.md is out of sync with findings/findings.yaml."
+              echo "Run 'python3 scripts/generate_report.py' locally and commit the result."
+              git diff docs/remediation-summary.md
+              exit 1
+          fi
+
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run: { working-directory: terraform/environments/prod }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with: { terraform_version: 1.6.6 }
+      - run: terraform fmt -check -recursive ../..
+      - run: terraform init -backend=false
+      - run: terraform validate
+
+      - name: tflint
+        uses: terraform-linters/setup-tflint@v4
+      - run: tflint --recursive --chdir=../..
+
+      - name: tfsec
+        uses: aquasecurity/tfsec-pr-commenter-action@v1.3.1
+        if: github.event_name == 'pull_request'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          working_directory: terraform
+          tfsec_args: --minimum-severity HIGH
+
+  scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install boto3 pyyaml
+      - name: import check
+        run: |
+          python3 -c "import scripts.iam_policy_generator" 2>/dev/null || \
+            python3 -m py_compile scripts/iam-policy-generator.py
+          python3 -m py_compile scripts/snapshot-audit.py
+          python3 -m py_compile scripts/reprocess-dlq.py
+          python3 -m py_compile scripts/generate_report.py

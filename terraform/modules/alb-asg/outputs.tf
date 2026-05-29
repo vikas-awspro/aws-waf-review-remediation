@@ -1,0 +1,6 @@
+output "alb_arn"        { value = aws_lb.this.arn }
+output "alb_dns_name"   { value = aws_lb.this.dns_name }
+output "alb_zone_id"    { value = aws_lb.this.zone_id }
+output "target_group_arn" { value = aws_lb_target_group.web.arn }
+output "web_asg_name"   { value = aws_autoscaling_group.web.name }
+output "app_asg_name"   { value = aws_autoscaling_group.app.name }

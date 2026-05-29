@@ -1,0 +1,367 @@
+# Single source of truth for the 27 WAF review findings.
+# Each entry tracks: pillar, risk, current status, the artefact that fixes it
+# (a Terraform module path or a runbook path), and the measured before/after.
+#
+# Updated as remediations land. Drives the auto-generated remediation report
+# in docs/remediation-summary.md.
+
+findings:
+  # ============================== SECURITY ==============================
+  - id: SEC-01
+    pillar: security
+    title: IAM over-privileged app-tier role (PowerUserAccess)
+    risk: HIGH
+    waf_reference: "SEC 3 — Permissions Management: least privilege"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/iam-app-tier
+      script: scripts/iam-policy-generator.py
+    before: "PowerUserAccess attached to app-tier EC2 instance profile"
+    after: "Custom inline policy: s3 vault prefix, rds-db:connect, ssm /aras/*, logs"
+    effort_days: 5
+    risk_reduction: critical
+    notes: "Generated from 30-day CloudTrail observation; staged 1 week before prod"
+
+  - id: SEC-02
+    pillar: security
+    title: RDS SQL Server storage not encrypted
+    risk: HIGH
+    waf_reference: "SEC 8 — Protecting Data at Rest"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/rds-mssql
+      runbook: runbooks/rds-encryption-cutover.md
+    before: "storage_encrypted = false; 2 TB of PLM data in plaintext"
+    after: "storage_encrypted = true with dedicated KMS CMK; rotation enabled"
+    effort_days: 15
+    risk_reduction: critical
+    notes: "Snapshot/restore cutover during planned maintenance window"
+
+  - id: SEC-03
+    pillar: security
+    title: S3 document vault missing explicit deny-unless-allow bucket policy
+    risk: HIGH
+    waf_reference: "SEC 8 — Control access to data"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/s3-document-vault
+    before: "Relied on default-deny + BPA only; any account IAM role could read"
+    after: "Explicit bucket policy: principal-scoped allow + S3 Access Analyser enabled"
+    effort_days: 2
+    risk_reduction: critical
+
+  - id: SEC-04
+    pillar: security
+    title: No AWS WAF on internet-facing ALB
+    risk: HIGH
+    waf_reference: "SEC 6 — Network Protection"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/waf
+    before: "ALB had no Web ACL associated"
+    after: "WAF Web ACL with 4 managed rule groups; 2-week COUNT baseline then BLOCK"
+    effort_days: 2
+    risk_reduction: critical
+
+  - id: SEC-05
+    pillar: security
+    title: EC2 instances not enrolled in SSM Patch Manager
+    risk: MEDIUM
+    waf_reference: "SEC 7 — Patch OS and applications"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/ssm-patch-manager
+    before: "Ad-hoc manual patching"
+    after: "Patch baseline + maintenance window Sun 01:00–03:00 GMT, 7-day approval delay"
+    effort_days: 5
+    risk_reduction: high
+
+  - id: SEC-06
+    pillar: security
+    title: CloudTrail not forwarded to Splunk SIEM
+    risk: MEDIUM
+    waf_reference: "SEC 4 — Detection"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/cloudtrail-siem
+    before: "CloudTrail logs in S3 only; not correlated with PMI SOC alerts"
+    after: "CloudWatch Logs → Kinesis Firehose → Splunk HEC; EventBridge for high-severity"
+    effort_days: 21
+    risk_reduction: high
+    notes: "PMI IT change management was the long pole"
+
+  - id: SEC-07
+    pillar: security
+    title: No cloud-specific incident response runbook
+    risk: MEDIUM
+    waf_reference: "SEC 10 — Incident Response"
+    status: remediated
+    fixed_by:
+      runbook: runbooks/ir-runbook.md
+    before: "No documented IR steps for AWS-specific events"
+    after: "Runbook covering containment, credential revocation, evidence preservation, escalation"
+    effort_days: 12
+    risk_reduction: high
+    notes: "Validated via 2-hour tabletop exercise with PMI IT Security"
+
+  # ============================== RELIABILITY ==============================
+  - id: REL-01
+    pillar: reliability
+    title: RDS SQL Server deployed Single-AZ
+    risk: HIGH
+    waf_reference: "REL 9 — Use multiple AZs"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/rds-mssql
+    before: "Single-AZ; 15–40 min unplanned failover RTO"
+    after: "Multi-AZ; synchronous standby in eu-west-1b; 60–120 s automatic failover"
+    effort_days: 1
+    risk_reduction: critical
+    notes: "No additional SQL Server licence cost (standby is non-addressable)"
+
+  - id: REL-02
+    pillar: reliability
+    title: No defined RTO/RPO for PLM application
+    risk: HIGH
+    waf_reference: "REL 2 — Recovery Objectives"
+    status: remediated
+    fixed_by:
+      runbook: runbooks/rto-rpo-bia.md
+    before: "No SLA; backup retention 7 days but not validated"
+    after: "SLA documented: 99.9% during business hours, RTO ≤ 2h, RPO ≤ 1h; quarterly DR drill"
+    effort_days: 15
+    risk_reduction: high
+
+  - id: REL-03
+    pillar: reliability
+    title: ASG health check using EC2 status only
+    risk: MEDIUM
+    waf_reference: "REL 7 — Load balancing and health checks"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/alb-asg
+    before: "HealthCheckType = EC2; hung ARAS processes not detected"
+    after: "HealthCheckType = ELB; ALB probes /aras/health; 2-failure replacement"
+    effort_days: 2
+
+  - id: REL-04
+    pillar: reliability
+    title: No database connection pooling
+    risk: MEDIUM
+    waf_reference: "REL 6 — Use connection pooling"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/rds-proxy
+    before: "ARAS connects direct to RDS; 12% HTTP 500 at 150 concurrent users"
+    after: "RDS Proxy; max_connection_percent=80; connection_borrow_timeout=120s"
+    effort_days: 5
+
+  - id: REL-05
+    pillar: reliability
+    title: Lambda integration functions have no DLQ
+    risk: MEDIUM
+    waf_reference: "REL 7 — Handle transient failures gracefully"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/lambda-integration
+      script: scripts/reprocess-dlq.py
+    before: "Failed Lambda invocations silently dropped after 2 retries"
+    after: "SQS DLQ + CloudWatch alarm + reprocessing script + 3-retry exponential backoff"
+    effort_days: 2
+
+  - id: REL-06
+    pillar: reliability
+    title: S3 vault missing versioning + CRR
+    risk: MEDIUM
+    waf_reference: "REL 9 — Durable storage + replication"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/s3-document-vault
+    before: "No versioning; no CRR; 5.2 TB only in eu-west-1"
+    after: "Versioning enabled; CRR to eu-central-1; Object Lock COMPLIANCE for regulatory prefix"
+    effort_days: 7
+    notes: "Existing 5.2 TB seeded via S3 Batch Replication"
+
+  - id: REL-07
+    pillar: reliability
+    title: No failure injection testing or Game Day
+    risk: LOW
+    waf_reference: "REL 11 — Test workload failure scenarios"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/fis-gameday
+      runbook: runbooks/game-day.md
+    before: "Failure modes only observed via incidents"
+    after: "AWS FIS experiment templates + half-day Game Day; quarterly cadence"
+    effort_days: 7
+
+  # ============================== PERFORMANCE ==============================
+  - id: PERF-01
+    pillar: performance
+    title: RDS r5.2xlarge over-provisioned
+    risk: MEDIUM
+    waf_reference: "PERF 7 — Right-size resources"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/rds-mssql
+    before: "r5.2xlarge: CPU p99=22%, memory 38%"
+    after: "r5.xlarge — 2× headroom; sequenced with REL-01 maintenance window"
+    effort_days: 1
+    saving_usd_month: 780
+
+  - id: PERF-02
+    pillar: performance
+    title: No caching layer — all requests hit RDS
+    risk: HIGH
+    waf_reference: "PERF 9 — Cache data at multiple layers"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/elasticache
+    before: "Reference data = 34% of RDS CPU load"
+    after: "ElastiCache Redis Multi-AZ; 15-min TTL; cache-aside pattern; 240 ms → 4 ms hit"
+    effort_days: 10
+    saving_usd_month: 210
+    notes: "Enabled PERF-01 rightsize by removing 30–40% RDS load"
+
+  - id: PERF-03
+    pillar: performance
+    title: ALB idle timeout default (60s) drops long PLM exports
+    risk: MEDIUM
+    waf_reference: "PERF 5 — Networking"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/alb-asg
+    before: "60 s default → 504 on 3.2% of business-hours requests"
+    after: "idle_timeout=300s; IIS keepalive aligned"
+    effort_days: 1
+
+  - id: PERF-04
+    pillar: performance
+    title: Web tier t3.large CPU credit exhaustion
+    risk: HIGH
+    waf_reference: "PERF 3 — Compute"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/alb-asg
+    before: "t3.large; credits depleted in 2h; throttle to 30%; page load 1.2 s → 4.8 s"
+    after: "m5.large — non-burstable; sustained CPU performance"
+    effort_days: 1
+    saving_usd_month: -36  # net cost increase but eliminates degradation
+    notes: "Rolling instance refresh during business hours; zero downtime"
+
+  - id: PERF-05
+    pillar: performance
+    title: S3 presigned URL expiry too short for large CAD uploads
+    risk: MEDIUM
+    waf_reference: "PERF 6 — Storage"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/lambda-integration
+    before: "300 s expiry; APAC users uploading 500MB–2GB CAD files failed"
+    after: "3600 s expiry + multipart upload; client retry logic"
+    effort_days: 5
+
+  - id: PERF-06
+    pillar: performance
+    title: CloudWatch monitoring at 5-min granularity insufficient for perf investigation
+    risk: LOW
+    waf_reference: "PERF 10 — Monitor resources"
+    status: accepted_with_residual
+    fixed_by:
+      module: terraform/modules/alb-asg
+    before: "5-min default"
+    after: "App tier on detailed (1-min) monitoring; web tier remains 5-min (cost trade-off — see COST-05)"
+    effort_days: 1
+    notes: "Trade-off acknowledged; 1-min on app tier for perf debugging"
+
+  - id: PERF-07
+    pillar: performance
+    title: RDS Query Store not enabled
+    risk: MEDIUM
+    waf_reference: "PERF 7 — Database tuning"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/rds-mssql
+    before: "Query Store off; plan regression diagnosis took 3 days"
+    after: "Query Store enabled via custom param group; 30-day retention; 1 GB store"
+    effort_days: 1
+
+  # ============================== COST OPTIMISATION ==============================
+  - id: COST-01
+    pillar: cost
+    title: All compute on On-Demand pricing
+    risk: HIGH
+    waf_reference: "COST 6 — Pricing models"
+    status: remediated
+    fixed_by:
+      runbook: runbooks/savings-plan-purchase.md
+    before: "100% On-Demand"
+    after: "1-year Compute Savings Plan $1500/month commit + RDS RI post-rightsize"
+    effort_days: 2
+    saving_usd_month: 1600
+
+  - id: COST-02
+    pillar: cost
+    title: RDS over-provisioned (cross-ref PERF-01)
+    risk: MEDIUM
+    waf_reference: "COST 5 — Right-size services"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/rds-mssql
+    before: "r5.2xlarge"
+    after: "r5.xlarge (see PERF-01)"
+    effort_days: 0   # combined with PERF-01
+    saving_usd_month: 815
+
+  - id: COST-03
+    pillar: cost
+    title: S3 — no lifecycle policy for aged objects
+    risk: MEDIUM
+    waf_reference: "COST 7 — Lifecycle policies"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/s3-document-vault
+    before: "All 5.2 TB in S3 Standard; 68% objects unaccessed > 180 days"
+    after: "STD → STD-IA at 90d → Glacier Flex at 365d → expire at 7y (regulatory)"
+    effort_days: 2
+    saving_usd_month: 150
+
+  - id: COST-04
+    pillar: cost
+    title: Lambda traffic routed through NAT Gateway
+    risk: MEDIUM
+    waf_reference: "COST 5 — Use VPC Endpoints"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/vpc-endpoints
+    before: "2.1 TB/month through NAT GW at $0.045/GB = $94.50/mo"
+    after: "Gateway endpoints (S3, DynamoDB — free) + Interface (SSM, SQS, SM, Logs)"
+    effort_days: 2
+    saving_usd_month: 87
+
+  - id: COST-05
+    pillar: cost
+    title: CloudWatch detailed monitoring unnecessarily enabled on web tier
+    risk: LOW
+    waf_reference: "COST 5 — Right-size monitoring"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/alb-asg
+    before: "1-min granularity on all 4 EC2"
+    after: "Web tier: basic (5-min). App tier: detailed retained for perf debugging"
+    effort_days: 1
+    saving_usd_month: 4
+
+  - id: COST-06
+    pillar: cost
+    title: Unused EBS snapshots accumulating
+    risk: LOW
+    waf_reference: "COST 7 — Clean up unused resources"
+    status: remediated
+    fixed_by:
+      module: terraform/modules/dlm-snapshots
+      script: scripts/snapshot-audit.py
+    before: "47 snapshots, 1.8 TB, $90/mo"
+    after: "~12 snapshots after audit; DLM policy expires manual snapshots > 30d"
+    effort_days: 1
+    saving_usd_month: 65
