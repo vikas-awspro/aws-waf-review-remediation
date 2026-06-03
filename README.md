@@ -1,4 +1,4 @@
-# AWS Well-Architected Review — Remediation
+# AWS Well-Architected Review & Remediation — Enterprise PLM System
 
 **Terraform, runbooks, and scripts that close all 27 findings from the AWS Well-Architected Framework review of an enterprise PLM (Product Lifecycle Management) workload — 9 HIGH, 14 MEDIUM, 4 LOW across Security, Reliability, Performance, and Cost. Delivers $3,675/month ($44,100/year) in addressable cost savings while raising every pillar score by 26–34 points. Each finding's fix is traceable from the inventory YAML to a specific Terraform module, runbook, or script.**
 
