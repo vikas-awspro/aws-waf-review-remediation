@@ -79,4 +79,4 @@ Exercise the eu-central-1 CRR replica:
 - R&D Lead, customer: __________ (Date: __________)
 - IT Manager, customer: _________ (Date: __________)
 - Regulatory Affairs, customer: __________ (Date: __________)
-- Cloud Architect, IBM (Vikas Jain): __________ (Date: __________)
+- Cloud Architect, (Vikas Jain): __________ (Date: __________)

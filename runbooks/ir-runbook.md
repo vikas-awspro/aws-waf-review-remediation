@@ -117,7 +117,7 @@ Tooling:
 |------|---------|------|
 | customer CISO | customer directory | Any confirmed P0/P1 |
 | AWS TAM / Support | AWS Console → Support Center | Any P0/P1 needing AWS assistance |
-| IBM delivery lead | IBM PM | P0/P1 incidents involving delivered components |
+| Delivery lead |  PM | P0/P1 incidents involving delivered components |
 | Legal / privacy | customer Legal | Confirmed personal-data exposure |
 | Regulatory | customer Regulatory | Personal-data breach affecting > 100 individuals (GDPR) |
 

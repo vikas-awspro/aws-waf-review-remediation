@@ -128,9 +128,9 @@ Sprint 5 (Week 7–8)  ─┐
 
 ## Sign-off
 
-Remediations were applied to the customer's production PLM account between Apr 2023 and Sep 2023 by the IBM cloud engineering team. All 26 'remediated' findings have Terraform / runbook artefacts in this repository. The one finding marked *accepted with residual risk* (PERF-06) is a documented cost/granularity trade-off — app-tier instances retain 1-min monitoring; web tier moved to 5-min baseline (COST-05).
+Remediations were applied to the customer's production PLM account between Apr 2023 and Sep 2023 by the cloud engineering team. All 26 'remediated' findings have Terraform / runbook artefacts in this repository. The one finding marked *accepted with residual risk* (PERF-06) is a documented cost/granularity trade-off — app-tier instances retain 1-min monitoring; web tier moved to 5-min baseline (COST-05).
 
-- Cloud Architect, IBM India: Vikas Jain
+- Cloud Architect : Vikas Jain
 - Cloud Infrastructure Lead, customer: signed (date in document management system)
 - IT Security Officer, customer: signed
 
